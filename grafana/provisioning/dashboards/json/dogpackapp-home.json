@@ -15,18 +15,32 @@
       }
     ]
   },
-  "description": "Shared landing dashboard for AWS/ECS and all VM/node infrastructure health, availability, capacity, disk, network and alert status.",
+  "description": "Enterprise operations home: platform health, 24h SLO, capacity hotspots, incidents, AWS/ECS and application errors.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "id": null,
-  "links": [],
-  "liveNow": false,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [
+        "dogpackapp"
+      ],
+      "targetBlank": false,
+      "title": "Dogpackapp dashboards",
+      "tooltip": "",
+      "type": "dashboards"
+    }
+  ],
+  "liveNow": true,
   "panels": [
     {
       "id": 1,
       "type": "row",
-      "title": "Infrastructure Health \u2014 At a Glance",
+      "title": "Enterprise Command Center",
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -39,25 +53,62 @@
     {
       "id": 2,
       "type": "stat",
-      "title": "Total Nodes",
+      "title": "Platform Health",
+      "description": "Share of scrape targets that are UP in the selected environment and instances.",
       "gridPos": {
-        "h": 4,
-        "w": 4,
+        "h": 5,
+        "w": 3,
         "x": 0,
         "y": 1
       },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "(count(up{environment=~\"$environment\",instance=~\"$instance\"} == 1) / clamp_min(count(up{environment=~\"$environment\",instance=~\"$instance\"}), 1)) * 100",
+          "legendFormat": "Health",
           "refId": "A",
-          "expr": "count(up{instance=~\"$instance\"})",
-          "legendFormat": "Nodes",
-          "instant": true
+          "exemplar": false,
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "decimals": 0
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "yellow",
+                "value": 95
+              },
+              {
+                "color": "green",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -70,37 +121,50 @@
           "values": false
         },
         "orientation": "auto",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto"
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
+        "textMode": "auto",
+        "wideLayout": true,
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
       }
     },
     {
       "id": 3,
       "type": "stat",
-      "title": "Nodes UP",
+      "title": "Availability (24h SLO)",
+      "description": "24-hour average availability of selected targets. Enterprise target: 99.9%.",
       "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 4,
+        "h": 5,
+        "w": 3,
+        "x": 3,
         "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
       },
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "avg(avg_over_time(up{environment=~\"$environment\",instance=~\"$instance\"}[24h])) * 100",
+          "legendFormat": "SLO",
           "refId": "A",
-          "expr": "count(up{instance=~\"$instance\"} == 1)",
-          "legendFormat": "UP",
-          "instant": true
+          "exemplar": false,
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -109,11 +173,20 @@
                 "value": null
               },
               {
+                "color": "orange",
+                "value": 99.0
+              },
+              {
+                "color": "yellow",
+                "value": 99.5
+              },
+              {
                 "color": "green",
-                "value": 1
+                "value": 99.9
               }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -126,37 +199,1523 @@
           "values": false
         },
         "orientation": "auto",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto"
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
+        "textMode": "auto",
+        "wideLayout": true,
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
       }
     },
     {
       "id": 4,
       "type": "stat",
-      "title": "Nodes DOWN",
+      "title": "Nodes UP",
+      "description": "Node / service exporters currently reachable.",
       "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 8,
+        "h": 5,
+        "w": 3,
+        "x": 6,
         "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
       },
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "count(up{environment=~\"$environment\",instance=~\"$instance\"} == 1) or vector(0)",
+          "legendFormat": "UP",
           "refId": "A",
-          "expr": "count(up{instance=~\"$instance\"} == 0)",
-          "legendFormat": "DOWN",
-          "instant": true
+          "exemplar": false,
+          "instant": true,
+          "range": false
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
           "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Nodes DOWN",
+      "description": "Unreachable exporters. Investigate immediately if this is not zero.",
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 9,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "count(up{environment=~\"$environment\",instance=~\"$instance\"} == 0) or vector(0)",
+          "legendFormat": "DOWN",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "API Probes OK",
+      "description": "Blackbox HTTP probes currently succeeding.",
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 12,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "count(probe_success{job=\"api\"} == 1) or vector(0)",
+          "legendFormat": "API",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "MySQL Exporters",
+      "description": "mysqld_exporter targets that are UP.",
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 15,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "count(up{job=\"mysql\"} == 1) or vector(0)",
+          "legendFormat": "MySQL",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Critical Alerts",
+      "description": "Firing Prometheus alerts labeled severity=critical.",
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 18,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "count(ALERTS{alertstate=\"firing\",severity=\"critical\"}) or vector(0)",
+          "legendFormat": "Critical",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Warning Alerts",
+      "description": "Firing Prometheus alerts labeled severity=warning.",
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 21,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "count(ALERTS{alertstate=\"firing\",severity=\"warning\"}) or vector(0)",
+          "legendFormat": "Warning",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Fleet Capacity",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "panels": []
+    },
+    {
+      "id": 11,
+      "type": "gauge",
+      "title": "Fleet CPU",
+      "description": "Average CPU utilization across selected nodes.",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "100 - avg(rate(node_cpu_seconds_total{mode=\"idle\",environment=~\"$environment\",instance=~\"$instance\"}[$__rate_interval])) * 100",
+          "legendFormat": "CPU",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "minVizWidth": 75,
+        "minVizHeight": 75
+      }
+    },
+    {
+      "id": 12,
+      "type": "gauge",
+      "title": "Fleet Memory",
+      "description": "Aggregate memory used across selected nodes.",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "(1 - sum(node_memory_MemAvailable_bytes{environment=~\"$environment\",instance=~\"$instance\"}) / sum(node_memory_MemTotal_bytes{environment=~\"$environment\",instance=~\"$instance\"})) * 100",
+          "legendFormat": "Memory",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 75
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "minVizWidth": 75,
+        "minVizHeight": 75
+      }
+    },
+    {
+      "id": 13,
+      "type": "gauge",
+      "title": "Worst Disk",
+      "description": "Highest filesystem utilization among selected nodes (excludes tmpfs/overlay).",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "max(100 * (1 - (node_filesystem_avail_bytes{environment=~\"$environment\",instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs|fuse.lxcfs\",mountpoint!~\"/run.*|/sys.*|/proc.*|/dev.*\"} / node_filesystem_size_bytes{environment=~\"$environment\",instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs|fuse.lxcfs\",mountpoint!~\"/run.*|/sys.*|/proc.*|/dev.*\"})))",
+          "legendFormat": "Disk",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 75
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "minVizWidth": 75,
+        "minVizHeight": 75
+      }
+    },
+    {
+      "id": 14,
+      "type": "gauge",
+      "title": "API Success Rate",
+      "description": "Blackbox probe success rate over the last hour.",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "avg(avg_over_time(probe_success{job=\"api\"}[1h])) * 100",
+          "legendFormat": "API",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 99.0
+              },
+              {
+                "color": "yellow",
+                "value": 99.5
+              },
+              {
+                "color": "green",
+                "value": 99.9
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "minVizWidth": 75,
+        "minVizHeight": 75
+      }
+    },
+    {
+      "id": 15,
+      "type": "row",
+      "title": "Availability Matrix",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "panels": []
+    },
+    {
+      "id": 16,
+      "type": "status-history",
+      "title": "Node / Service Status",
+      "description": "Green = UP, red = DOWN. Each row is a scrape target.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "up{environment=~\"$environment\",instance=~\"$instance\"}",
+          "legendFormat": "{{job}} \u00b7 {{instance}}",
+          "refId": "A",
+          "exemplar": false,
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "never",
+        "colWidth": 0.9,
+        "rowHeight": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "status-history",
+      "title": "HTTP API Probes",
+      "description": "Blackbox HTTP 2xx probes. Red means the endpoint failed health checks.",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "probe_success{job=\"api\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "exemplar": false,
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "never",
+        "colWidth": 0.9,
+        "rowHeight": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "type": "row",
+      "title": "Capacity Hotspots",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "panels": []
+    },
+    {
+      "id": 19,
+      "type": "bargauge",
+      "title": "CPU by Node",
+      "description": "Hottest CPU consumers. Open Resources dashboard to drill down.",
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 23
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "100 - (avg by (instance, job) (rate(node_cpu_seconds_total{mode=\"idle\",environment=~\"$environment\",instance=~\"$instance\"}[$__rate_interval])) * 100)",
+          "legendFormat": "{{job}} {{instance}}",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "lcd",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      }
+    },
+    {
+      "id": 20,
+      "type": "bargauge",
+      "title": "Memory by Node",
+      "description": "Highest memory utilization per node.",
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 23
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "(1 - (node_memory_MemAvailable_bytes{environment=~\"$environment\",instance=~\"$instance\"} / node_memory_MemTotal_bytes{environment=~\"$environment\",instance=~\"$instance\"})) * 100",
+          "legendFormat": "{{job}} {{instance}}",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 75
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "lcd",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      }
+    },
+    {
+      "id": 21,
+      "type": "bargauge",
+      "title": "Disk by Mount",
+      "description": "Filesystem utilization. Investigate anything over 85%.",
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 23
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "100 * (1 - (node_filesystem_avail_bytes{environment=~\"$environment\",instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs|fuse.lxcfs\",mountpoint!~\"/run.*|/sys.*|/proc.*|/dev.*\"} / node_filesystem_size_bytes{environment=~\"$environment\",instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs|fuse.lxcfs\",mountpoint!~\"/run.*|/sys.*|/proc.*|/dev.*\"}))",
+          "legendFormat": "{{instance}} {{mountpoint}}",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 75
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "lcd",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      }
+    },
+    {
+      "id": 22,
+      "type": "row",
+      "title": "Fleet Trends",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "panels": []
+    },
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "CPU Utilization",
+      "description": "",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 33
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\",environment=~\"$environment\",instance=~\"$instance\"}[$__rate_interval])) * 100)",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "exemplar": false,
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "barAlignment": 0,
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "scheme",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 24,
+      "type": "timeseries",
+      "title": "Memory Utilization",
+      "description": "",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 33
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "(1 - (node_memory_MemAvailable_bytes{environment=~\"$environment\",instance=~\"$instance\"} / node_memory_MemTotal_bytes{environment=~\"$environment\",instance=~\"$instance\"})) * 100",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "exemplar": false,
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "barAlignment": 0,
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "scheme",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "Network Throughput",
+      "description": "",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 33
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (instance) (rate(node_network_receive_bytes_total{environment=~\"$environment\",instance=~\"$instance\",device!=\"lo\"}[$__rate_interval])) * 8",
+          "legendFormat": "RX {{instance}}",
+          "refId": "A",
+          "exemplar": false,
+          "instant": false,
+          "range": true
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (instance) (rate(node_network_transmit_bytes_total{environment=~\"$environment\",instance=~\"$instance\",device!=\"lo\"}[$__rate_interval])) * 8",
+          "legendFormat": "TX {{instance}}",
+          "refId": "B",
+          "exemplar": false,
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "barAlignment": 0,
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "scheme",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 26,
+      "type": "row",
+      "title": "Incidents & SLO",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "panels": []
+    },
+    {
+      "id": 27,
+      "type": "table",
+      "title": "Active Incidents",
+      "description": "Currently firing Prometheus alerts. Empty table means no firing alerts.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 42
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "ALERTS{alertstate=\"firing\"}",
+          "legendFormat": "{{alertname}}",
+          "refId": "A",
+          "exemplar": false,
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -171,46 +1730,225 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "severity"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
           ],
-          "fields": "",
-          "values": false
+          "countRows": false,
+          "fields": ""
         },
-        "orientation": "auto",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto"
+        "sortBy": [
+          {
+            "displayName": "severity",
+            "desc": false
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "alertstate": true,
+              "monitor": true,
+              "cluster": true,
+              "prometheus": true
+            },
+            "indexByName": {
+              "alertname": 0,
+              "severity": 1,
+              "instance": 2,
+              "job": 3,
+              "environment": 4,
+              "instance_id": 5
+            },
+            "renameByName": {
+              "alertname": "Alert",
+              "severity": "Severity",
+              "instance": "Instance",
+              "job": "Service",
+              "environment": "Environment",
+              "instance_id": "Instance ID"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "type": "timeseries",
+      "title": "API Probe Latency",
+      "description": "Blackbox probe duration. Alerts fire above 5s.",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 42
       },
       "datasource": {
         "type": "prometheus",
         "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 5,
-      "type": "stat",
-      "title": "Fleet CPU",
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 12,
-        "y": 1
       },
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "probe_duration_seconds{job=\"api\"}",
+          "legendFormat": "{{instance}}",
           "refId": "A",
-          "expr": "100 - avg(rate(node_cpu_seconds_total{mode=\"idle\",instance=~\"$instance\"}[5m])) * 100",
-          "legendFormat": "CPU",
-          "instant": true
+          "exemplar": false,
+          "instant": false,
+          "range": true
         }
       ],
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "barAlignment": 0,
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "scheme",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 29,
+      "type": "row",
+      "title": "AWS / ECS",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      },
+      "panels": []
+    },
+    {
+      "id": 30,
+      "type": "gauge",
+      "title": "ECS CPU",
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 52
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource}"
+          },
+          "namespace": "AWS/ECS",
+          "region": "$region",
+          "metricName": "CPUUtilization",
+          "statistic": "Average",
+          "statistics": [
+            "Average"
+          ],
+          "period": "300",
+          "dimensions": {
+            "ClusterName": "$cluster",
+            "ServiceName": "$service"
+          },
+          "dimensionFilters": {
+            "ClusterName": "$cluster",
+            "ServiceName": "$service"
+          },
+          "refId": "A",
+          "matchExact": true,
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "queryMode": "Metrics"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100,
           "unit": "percent",
           "decimals": 1,
           "thresholds": {
@@ -225,64 +1963,8 @@
                 "value": 70
               },
               {
-                "color": "red",
+                "color": "orange",
                 "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "orientation": "auto",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto"
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 6,
-      "type": "stat",
-      "title": "Fleet Memory",
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 16,
-        "y": 1
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "(1 - sum(node_memory_MemAvailable_bytes{instance=~\"$instance\"}) / sum(node_memory_MemTotal_bytes{instance=~\"$instance\"})) * 100",
-          "legendFormat": "Memory",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 75
               },
               {
                 "color": "red",
@@ -302,36 +1984,268 @@
           "values": false
         },
         "orientation": "auto",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto"
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       }
     },
     {
-      "id": 7,
-      "type": "stat",
-      "title": "Firing Alerts",
+      "id": 31,
+      "type": "gauge",
+      "title": "ECS Memory",
       "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 20,
-        "y": 1
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 52
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource}"
       },
       "targets": [
         {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource}"
+          },
+          "namespace": "AWS/ECS",
+          "region": "$region",
+          "metricName": "MemoryUtilization",
+          "statistic": "Average",
+          "statistics": [
+            "Average"
+          ],
+          "period": "300",
+          "dimensions": {
+            "ClusterName": "$cluster",
+            "ServiceName": "$service"
+          },
+          "dimensionFilters": {
+            "ClusterName": "$cluster",
+            "ServiceName": "$service"
+          },
           "refId": "A",
-          "expr": "count(ALERTS{alertstate=\"firing\"}) or vector(0)",
-          "legendFormat": "Alerts",
-          "instant": true
+          "matchExact": true,
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "queryMode": "Metrics"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "min": 0,
+          "max": 100,
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 85
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "ECS CPU / Memory Trend",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 52
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${datasource}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource}"
+          },
+          "namespace": "AWS/ECS",
+          "region": "$region",
+          "metricName": "CPUUtilization",
+          "statistic": "Average",
+          "statistics": [
+            "Average"
+          ],
+          "period": "300",
+          "dimensions": {
+            "ClusterName": "$cluster",
+            "ServiceName": "$service"
+          },
+          "dimensionFilters": {
+            "ClusterName": "$cluster",
+            "ServiceName": "$service"
+          },
+          "refId": "A",
+          "matchExact": true,
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "queryMode": "Metrics"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${datasource}"
+          },
+          "namespace": "AWS/ECS",
+          "region": "$region",
+          "metricName": "MemoryUtilization",
+          "statistic": "Average",
+          "statistics": [
+            "Average"
+          ],
+          "period": "300",
+          "dimensions": {
+            "ClusterName": "$cluster",
+            "ServiceName": "$service"
+          },
+          "dimensionFilters": {
+            "ClusterName": "$cluster",
+            "ServiceName": "$service"
+          },
+          "refId": "B",
+          "matchExact": true,
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "queryMode": "Metrics"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "barAlignment": 0,
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "scheme",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 33,
+      "type": "row",
+      "title": "Application Errors",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 59
+      },
+      "panels": []
+    },
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "Error / Fatal Logs (15m)",
+      "description": "Docker/Promtail log lines matching error, exception, fatal or panic in the last 15 minutes.",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 60
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${loki}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki}"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({job=\"docker\"} |~ \"(?i)error|exception|fatal|panic\" [15m]))",
+          "queryType": "instant",
+          "refId": "A",
+          "legendFormat": "Errors"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "decimals": 0,
           "thresholds": {
             "mode": "absolute",
@@ -341,575 +2255,24 @@
                 "value": null
               },
               {
-                "color": "red",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "orientation": "auto",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto"
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      },
-      "description": "Uses Prometheus ALERTS when Prometheus alerting rules are configured. A value of 0 means no firing Prometheus alerts."
-    },
-    {
-      "id": 8,
-      "type": "row",
-      "title": "Node Availability & Details",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 5
-      },
-      "panels": []
-    },
-    {
-      "id": 9,
-      "type": "timeseries",
-      "title": "Node Status",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "up{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}}",
-          "range": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "max": 1
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 10,
-      "type": "table",
-      "title": "Node Details",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "node_uname_info{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}}",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": {
-          "enablePagination": true
-        }
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 11,
-      "type": "row",
-      "title": "Node Resources \u2014 CPU / Memory / Load",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 13
-      },
-      "panels": []
-    },
-    {
-      "id": 12,
-      "type": "timeseries",
-      "title": "CPU Utilization by Node",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 14
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\",instance=~\"$instance\"}[5m])) * 100)",
-          "legendFormat": "{{instance}}",
-          "range": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 13,
-      "type": "timeseries",
-      "title": "Memory Utilization by Node",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 14
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "(1 - (node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"})) * 100",
-          "legendFormat": "{{instance}}",
-          "range": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 14,
-      "type": "row",
-      "title": "Node Capacity \u2014 Disk / Network / Uptime",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 21
-      },
-      "panels": []
-    },
-    {
-      "id": 15,
-      "type": "timeseries",
-      "title": "Disk Utilization",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 22
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "100 * (1 - (node_filesystem_avail_bytes{instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs\",mountpoint!~\"/run.*|/sys.*|/proc.*\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs\",mountpoint!~\"/run.*|/sys.*|/proc.*\"}))",
-          "legendFormat": "{{instance}} {{mountpoint}}",
-          "range": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 16,
-      "type": "timeseries",
-      "title": "Network Traffic \u2014 RX/TX Mbps",
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 22
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum by(instance) (rate(node_network_receive_bytes_total{instance=~\"$instance\",device!=\"lo\"}[5m])) * 8 / 1000000",
-          "legendFormat": "RX {{instance}}",
-          "range": true
-        },
-        {
-          "refId": "B",
-          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{instance=~\"$instance\",device!=\"lo\"}[5m])) * 8 / 1000000",
-          "legendFormat": "TX {{instance}}",
-          "range": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Mbps"
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 17,
-      "type": "row",
-      "title": "Availability, Load & Uptime",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 29
-      },
-      "panels": []
-    },
-    {
-      "id": 18,
-      "type": "timeseries",
-      "title": "System Load \u2014 5m",
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 0,
-        "y": 30
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "node_load5{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}}",
-          "range": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 19,
-      "type": "timeseries",
-      "title": "Node Uptime",
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 8,
-        "y": 30
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "time() - node_boot_time_seconds{instance=~\"$instance\"}",
-          "legendFormat": "{{instance}}",
-          "range": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "decimals": 0
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 20,
-      "type": "stat",
-      "title": "Nodes With Disk > 90%",
-      "gridPos": {
-        "h": 6,
-        "w": 4,
-        "x": 16,
-        "y": 30
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "count((100 * (1 - (node_filesystem_avail_bytes{instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs\",mountpoint!~\"/run.*|/sys.*|/proc.*\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype!~\"tmpfs|overlay|squashfs\",mountpoint!~\"/run.*|/sys.*|/proc.*\"}))) > 90) or vector(0)",
-          "legendFormat": "Critical disks",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "orientation": "auto",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto"
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      }
-    },
-    {
-      "id": 21,
-      "type": "table",
-      "title": "Active Prometheus Alerts",
-      "gridPos": {
-        "h": 6,
-        "w": 4,
-        "x": 20,
-        "y": 30
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "ALERTS{alertstate=\"firing\"}",
-          "legendFormat": "{{alertname}}",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "options": {
-        "showHeader": true,
-        "cellHeight": "sm",
-        "footer": {
-          "enablePagination": true
-        }
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus}"
-      },
-      "description": "Lists firing Prometheus alerts when ALERTS is available."
-    },
-    {
-      "id": 22,
-      "type": "row",
-      "title": "AWS / ECS \u2014 Current Service Metrics",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 36
-      },
-      "panels": []
-    },
-    {
-      "id": 23,
-      "type": "gauge",
-      "title": "ECS CPU",
-      "gridPos": {
-        "h": 6,
-        "w": 6,
-        "x": 0,
-        "y": 37
-      },
-      "targets": [
-        {
-          "namespace": "AWS/ECS",
-          "region": "$region",
-          "metricName": "CPUUtilization",
-          "statistics": [
-            "Average"
-          ],
-          "period": "300",
-          "dimensions": [
-            {
-              "name": "ClusterName",
-              "value": "$cluster"
-            },
-            {
-              "name": "ServiceName",
-              "value": "$service"
-            }
-          ],
-          "refId": "A",
-          "matchExact": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
                 "color": "yellow",
-                "value": 70
+                "value": 1
+              },
+              {
+                "color": "orange",
+                "value": 20
               },
               {
                 "color": "red",
-                "value": 85
+                "value": 50
               }
             ]
-          }
+          },
+          "unit": "short"
         },
         "overrides": []
       },
       "options": {
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true,
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -918,221 +2281,191 @@
           "values": false
         },
         "orientation": "auto",
-        "textMode": "auto"
-      },
-      "datasource": {
-        "type": "cloudwatch",
-        "uid": "${datasource}"
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
       }
     },
     {
-      "id": 24,
-      "type": "gauge",
-      "title": "ECS Memory",
+      "id": 35,
+      "type": "logs",
+      "title": "Recent Errors",
       "gridPos": {
-        "h": 6,
-        "w": 6,
+        "h": 10,
+        "w": 18,
         "x": 6,
-        "y": 37
+        "y": 60
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${loki}"
       },
       "targets": [
         {
-          "namespace": "AWS/ECS",
-          "region": "$region",
-          "metricName": "MemoryUtilization",
-          "statistics": [
-            "Average"
-          ],
-          "period": "300",
-          "dimensions": [
-            {
-              "name": "ClusterName",
-              "value": "$cluster"
-            },
-            {
-              "name": "ServiceName",
-              "value": "$service"
-            }
-          ],
-          "refId": "A",
-          "matchExact": true
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki}"
+          },
+          "editorMode": "code",
+          "expr": "{job=\"docker\"} |~ \"(?i)error|exception|fatal|panic\"",
+          "queryType": "range",
+          "refId": "A"
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
       "options": {
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true,
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "orientation": "auto",
-        "textMode": "auto"
-      },
-      "datasource": {
-        "type": "cloudwatch",
-        "uid": "${datasource}"
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "signature"
       }
     },
     {
-      "id": 25,
+      "id": 36,
       "type": "timeseries",
-      "title": "ECS CPU / Memory Trend",
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 37
-      },
-      "targets": [
-        {
-          "namespace": "AWS/ECS",
-          "region": "$region",
-          "metricName": "CPUUtilization",
-          "statistics": [
-            "Average"
-          ],
-          "period": "300",
-          "dimensions": [
-            {
-              "name": "ClusterName",
-              "value": "$cluster"
-            },
-            {
-              "name": "ServiceName",
-              "value": "$service"
-            }
-          ],
-          "refId": "A",
-          "matchExact": true
-        },
-        {
-          "namespace": "AWS/ECS",
-          "region": "$region",
-          "metricName": "MemoryUtilization",
-          "statistics": [
-            "Average"
-          ],
-          "period": "300",
-          "dimensions": [
-            {
-              "name": "ClusterName",
-              "value": "$cluster"
-            },
-            {
-              "name": "ServiceName",
-              "value": "$service"
-            }
-          ],
-          "refId": "A",
-          "matchExact": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "datasource": {
-        "type": "cloudwatch",
-        "uid": "${datasource}"
-      }
-    },
-    {
-      "id": 26,
-      "type": "row",
-      "title": "Operations \u2014 Detailed Dashboards",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 43
-      },
-      "panels": []
-    },
-    {
-      "id": 27,
-      "type": "text",
-      "title": "Operations Navigation",
+      "title": "Error Rate",
       "gridPos": {
         "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 65
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${loki}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki}"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({job=\"docker\"} |~ \"(?i)error|exception|fatal|panic\" [$__auto]))",
+          "queryType": "range",
+          "legendFormat": "errors / interval",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "barAlignment": 0,
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "scheme",
+            "spanNulls": true,
+            "insertNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 37,
+      "type": "row",
+      "title": "Operations Navigation",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 70
       },
-      "targets": [],
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
+      "panels": []
+    },
+    {
+      "id": 38,
+      "type": "text",
+      "title": "Drill-down Dashboards",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 71
       },
       "options": {
         "mode": "markdown",
-        "content": "### Operations\nUse these dashboards for deeper investigation:\n\n- **ECS CloudWatch** \u2014 ECS CPU, memory, service performance and CloudWatch logs\n- **Dogpackapp Resources** \u2014 VM / Node Exporter resource details\n- **Docker Container Logs** \u2014 Docker/Loki container logs\n- **PM2 Application Logs** \u2014 PM2/Loki application logs\n- **AWS Dashboards** \u2014 AWS-specific detailed views\n\n**Home dashboard purpose:** quickly identify **DOWN nodes, firing alerts, CPU/memory pressure, disk risk, network activity and ECS service health** before opening a detailed dashboard."
-      },
-      "description": "Use the dashboard list to open detailed ECS, resources, Docker/Loki and PM2 dashboards."
+        "content": "### Dogpackapp \u00b7 Enterprise Home\n\nUse this page for **platform health, SLO, capacity risk and active incidents**. Open a detailed dashboard only after a KPI turns yellow or red.\n\n| Area | Dashboard | When to open |\n| --- | --- | --- |\n| Host CPU / memory / disk / net | [Dogpackapp Resources](/d/rYdddlPWj) | Node hotspot or DOWN exporter |\n| ECS CPU / memory / CloudWatch logs | [ECS CloudWatch](/d/dogpack-ecs-cloudwatch) | ECS gauge elevated |\n| Docker / container logs | [Docker Container Logs](/d/dogpack-docker-logs) | Error log spike |\n| PM2 application logs | [PM2 Application Logs](/d/dogpack-pm2-logs) | App exceptions |\n| Alert routing | [Alert rules](/alerting/list) | Critical or warning count > 0 |\n\n**How to read the command center:** green = healthy, yellow = approaching limit, red = action required. Default SLO is **99.9% availability over 24h**.\n"
+      }
     }
   ],
-  "refresh": "1m",
+  "refresh": "30s",
   "schemaVersion": 39,
   "tags": [
-    "aws",
-    "ecs",
-    "prometheus",
-    "infrastructure",
-    "dogpackapp",
+    "enterprise",
     "home",
-    "shared"
+    "noc",
+    "dogpackapp",
+    "slo"
   ],
   "templating": {
     "list": [
       {
         "current": {
           "selected": false,
+          "text": "Prometheus",
+          "value": "fetdpnih8dmo0f"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "Prometheus",
+        "multi": false,
+        "name": "prometheus",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
           "text": "CloudWatch",
           "value": "aws-cloudwatch"
         },
-        "hide": 0,
+        "hide": 2,
         "includeAll": false,
         "label": "CloudWatch",
         "multi": false,
@@ -1146,19 +2479,67 @@
       {
         "current": {
           "selected": false,
-          "text": "Prometheus",
-          "value": "prometheus"
+          "text": "Loki",
+          "value": "dogpack-loki"
         },
-        "hide": 0,
+        "hide": 2,
         "includeAll": false,
-        "label": "Prometheus",
+        "label": "Loki",
         "multi": false,
-        "name": "prometheus",
+        "name": "loki",
         "options": [],
-        "query": "prometheus",
+        "query": "loki",
         "refresh": 1,
         "regex": "",
         "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prometheus}"
+        },
+        "definition": "label_values(up, environment)",
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "label": "Environment",
+        "multi": true,
+        "name": "environment",
+        "options": [],
+        "query": "label_values(up, environment)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prometheus}"
+        },
+        "definition": "label_values(up{environment=~\"$environment\"}, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "label": "Instance",
+        "multi": true,
+        "name": "instance",
+        "options": [],
+        "query": "label_values(up{environment=~\"$environment\"}, instance)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
       },
       {
         "current": {
@@ -1174,21 +2555,20 @@
         "options": [
           {
             "selected": true,
-            "text": "us-east-2",
-            "value": "us-east-2"
+            "text": "us-east-1",
+            "value": "us-east-1"
           },
           {
             "selected": false,
-            "text": "us-east-1",
-            "value": "us-east-1"
+            "text": "us-east-2",
+            "value": "us-east-2"
           }
         ],
-        "query": "us-east-1, us-east-2",
+        "query": "us-east-1,us-east-2",
         "type": "custom"
       },
       {
         "current": {
-          "selected": false,
           "text": "",
           "value": ""
         },
@@ -1219,7 +2599,6 @@
       },
       {
         "current": {
-          "selected": false,
           "text": "",
           "value": ""
         },
@@ -1249,29 +2628,6 @@
         "regex": "",
         "sort": 1,
         "type": "query"
-      },
-      {
-        "current": {
-          "selected": false,
-          "text": "All",
-          "value": ".*"
-        },
-        "hide": 0,
-        "includeAll": true,
-        "allValue": ".*",
-        "label": "Instance",
-        "multi": true,
-        "name": "instance",
-        "options": [],
-        "query": "label_values(node_uname_info, instance)",
-        "refresh": 1,
-        "regex": "",
-        "sort": 1,
-        "type": "query",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${prometheus}"
-        }
       }
     ]
   },
@@ -1281,6 +2637,7 @@
   },
   "timepicker": {
     "refresh_intervals": [
+      "10s",
       "30s",
       "1m",
       "5m",
@@ -1290,8 +2647,8 @@
     ]
   },
   "timezone": "browser",
-  "title": "Dogpackapp \u2014 Shared Infrastructure Home",
+  "title": "Dogpackapp \u2014 Enterprise Home",
   "uid": "dogpackapp-shared-home",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
