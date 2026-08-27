@@ -1,0 +1,16 @@
+# Replace SLACK_WEBHOOK_URL in .env and use env substitution — or edit url below.
+# Grafana 11+ unified alerting. Test: Alerting → Contact points (should show slack-alerts).
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: slack-alerts
+    receivers:
+      - uid: dogpack-slack
+        type: slack
+        settings:
+          url: "${SLACK_WEBHOOK_URL}"
+          title: |
+            [{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}
+          text: |
+            {{ range .Alerts }}{{ .Annotations.summary }}{{ if .Annotations.description }} — {{ .Annotations.description }}{{ end }}
+            {{ end }}

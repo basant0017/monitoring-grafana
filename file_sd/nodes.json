@@ -1,0 +1,92 @@
+[
+  {
+    "targets": ["172.31.43.44:9100"],
+    "labels": {
+      "environment": "Production",
+      "service_job": "node",
+      "instance_id": "i-0d093b4600586fe8d",
+      "role": "client"
+    }
+  },
+  {
+    "targets": ["172.31.30.104:9100"],
+    "labels": {
+      "environment": "Staging",
+      "service_job": "Chatstaing",
+      "instance_id": "i-0c6d7059aab6958fc",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["10.0.3.173:9100"],
+    "labels": {
+      "environment": "Staging",
+      "service_job": "stg-dogpack-job-service-01",
+      "instance_id": "i-0c79fe4d36153a983",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["172.31.29.183:9100"],
+    "labels": {
+      "environment": "Staging",
+      "service_job": "InfraSuperadminAPI",
+      "instance_id": "i-0ea4f0aa3402a7531",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["10.0.1.19:9100"],
+    "labels": {
+      "environment": "Staging",
+      "service_job": "stg-dogpack-marketplace-job-01",
+      "instance_id": "i-0a2ffb6ff25443bc9",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["10.0.3.44:9100"],
+    "labels": {
+      "environment": "Staging",
+      "service_job": "stg-dogpack-superadmin-01",
+      "instance_id": "i-0cef1605cf1cd5918",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["10.0.3.97:9100"],
+    "labels": {
+      "environment": "Staging",
+      "service_job": "stg-dogpack-chat-service-01",
+      "instance_id": "i-09a7b26af8dab34ad",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["172.31.83.214:9100"],
+    "labels": {
+      "environment": "Staging",
+      "service_job": "social-chat-stg",
+      "instance_id": "i-01984902c77217af3",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["172.31.86.78:9100"],
+    "labels": {
+      "environment": "Staging",
+      "service_job": "social-job-stg",
+      "instance_id": "i-001b67b7a318d3ceb",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["172.31.15.245:9100"],
+    "labels": {
+      "environment": "Staging",
+      "service_job": "dogpackapp-social-nest-dev",
+      "instance_id": "i-021985ae04d575b13",
+      "role": "app"
+    }
+  }
+]

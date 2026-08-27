@@ -1,0 +1,67 @@
+# Promtail on client VMs — ships logs to Loki on your Grafana/monitoring server.
+# Replace MONITORING_PRIVATE_IP with the monitoring host private IP (same VPC).
+#
+# Push URL must reach port 3100 (open SG: clients → monitoring:3100).
+# Binary: https://github.com/grafana/loki/releases (promtail-*)
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/promtail-positions.yaml
+
+clients:
+  - url: http://MONITORING_PRIVATE_IP:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: journal
+    journal:
+      max_age: 12h
+      labels:
+        job: systemd-journal
+        env: production
+    relabel_configs:
+      - source_labels: [__journal__systemd_unit]
+        target_label: unit
+
+  - job_name: varlogs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/*.log
+
+  # PM2 application logs (adjust user/path if PM2 runs as root: /root/.pm2/logs)
+  - job_name: pm2
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: pm2
+          environment: staging
+          host: YOUR_HOSTNAME
+          __path__: /home/ubuntu/.pm2/logs/*-out.log
+    pipeline_stages:
+      - regex:
+          source: filename
+          expression: '(?P<app>[^/]+)-out\.log'
+      - labels:
+          app:
+          stream: stdout
+
+  - job_name: pm2-error
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: pm2
+          environment: staging
+          host: YOUR_HOSTNAME
+          __path__: /home/ubuntu/.pm2/logs/*-error.log
+    pipeline_stages:
+      - regex:
+          source: filename
+          expression: '(?P<app>[^/]+)-error\.log'
+      - labels:
+          app:
+          stream: stderr

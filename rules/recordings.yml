@@ -1,0 +1,7 @@
+# Pre-aggregations for faster dashboards at scale (extend as needed)
+groups:
+  - name: availability
+    interval: 30s
+    rules:
+      - record: job:up:count
+        expr: count by (job, environment) (up == 1)

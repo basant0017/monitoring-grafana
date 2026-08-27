@@ -1,0 +1,60 @@
+groups:
+  - name: infrastructure
+    rules:
+      - alert: NodeExporterDown
+        expr: max by (environment, instance_id) (up{instance_id!=""}) == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node exporter unreachable"
+          description: "Instance {{ $labels.instance }} has been down for more than 2 minutes."
+
+      - alert: HighCpuUsage
+        expr: (1 - avg by (instance_id) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU on {{ $labels.instance }}"
+          description: "CPU usage is above 85% for 10m."
+
+      - alert: LowDiskSpace
+        expr: min by (instance_id, mountpoint) ((node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes) * 100) < 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Filesystem {{ $labels.mountpoint }} has less than 10% free."
+
+  - name: mysql
+    rules:
+      - alert: MySQLExporterDown
+        expr: up{job="mysql"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL exporter unreachable"
+          description: "Instance {{ $labels.instance }} mysqld_exporter is down."
+
+  - name: api
+    rules:
+      - alert: APIProbeFailed
+        expr: probe_success{job="api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API health check failed"
+          description: "Blackbox probe failed for {{ $labels.instance }} (target {{ $labels.param_target }})."
+
+      - alert: APISlowResponse
+        expr: probe_duration_seconds{job="api"} > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow API response"
+          description: "Probe duration > 5s for {{ $labels.instance }}."

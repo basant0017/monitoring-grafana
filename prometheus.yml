@@ -1,0 +1,65 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: "central"
+    cluster: "dogpackapp"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+  - /etc/prometheus/rules/recordings.yml
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Multi-VM: edit file_sd/nodes.json (Node Exporter :9100 on each VM)
+  - job_name: "node"
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/nodes.json
+        refresh_interval: 30s
+    relabel_configs:
+      # Dogpackapp dashboard expects job = Production-Chat, Production-Backend, … (set `service_job` in file_sd)
+      - source_labels: [service_job]
+        regex: (.+)
+        target_label: job
+      # EC2 id as `instance` when `instance_id` is set in file_sd
+      - source_labels: [instance_id]
+        regex: (.+)
+        target_label: instance
+
+  # Per-VM: mysqld_exporter on :9104 (run alongside MySQL; open firewall to this Prometheus host)
+  - job_name: "mysql"
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/mysql.json
+        refresh_interval: 30s
+
+  # HTTP health via Blackbox (edit file_sd/api.json)
+  - job_name: "api"
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/api.json
+        refresh_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
+
+  - job_name: "blackbox"
+    static_configs:
+      - targets: ["blackbox:9115"]

@@ -1,0 +1,42 @@
+global:
+  resolve_timeout: 5m
+  # Optional: set SMTP / Slack defaults here after configuring receivers below
+
+route:
+  receiver: "team-alerts"
+  group_by: ["alertname", "environment", "severity", "instance"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: "team-alerts"
+    slack_configs:
+      - api_url: "__SLACK_WEBHOOK_URL__"
+        channel: "#alerts"
+        send_resolved: true
+        title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+        text: "{{ range .Alerts }}{{ .Annotations.summary }} — {{ .Annotations.description }}\n{{ end }}"
+
+    email_configs:
+      - to: "alerts@yourcompany.com"
+        from: "alertmanager@yourcompany.com"
+        smarthost: "smtp.yourcompany.com:587"
+        auth_username: "alertmanager@yourcompany.com"
+        auth_password: "REPLACE_WITH_SMTP_PASSWORD_OR_APP_PASSWORD"
+        headers:
+          Subject: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+        html: |
+          {{ range .Alerts }}
+          <p><b>{{ .Annotations.summary }}</b></p>
+          <p>{{ .Annotations.description }}</p>
+          <pre>{{ .Labels }}</pre>
+          {{ end }}
+        send_resolved: true
+
+inhibit_rules:
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: ["instance", "alertname"]

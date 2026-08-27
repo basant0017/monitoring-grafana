@@ -1,0 +1,52 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: pm2-stdout
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: pm2
+          environment: Staging
+          host: local-dev
+          stream: stdout
+          __path__: /pm2logs/*-out*.log
+    pipeline_stages:
+      - regex:
+          source: filename
+          expression: '.*/(?P<app>[^/]+?)-out(?:-\d+)?\.log'
+      - labels:
+          app:
+      - regex:
+          expression: '(?i)\[(?P<level>ERROR|WARN|INFO|DEBUG|TRACE|FATAL)\]'
+      - labels:
+          level:
+      - regex:
+          expression: '(?i)"level"\s*:\s*"(?P<level>error|warn|info|debug|trace|fatal)"'
+      - labels:
+          level:
+
+  - job_name: pm2-stderr
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: pm2
+          environment: Staging
+          host: local-dev
+          stream: stderr
+          __path__: /pm2logs/*-error*.log
+    pipeline_stages:
+      - regex:
+          source: filename
+          expression: '.*/(?P<app>[^/]+?)-error(?:-\d+)?\.log'
+      - labels:
+          app:
+      - static_labels:
+          level: error

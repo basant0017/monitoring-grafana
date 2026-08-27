@@ -1,0 +1,55 @@
+apiVersion: 1
+
+# AWS regions: us-east-1 and us-east-2 only. If this Grafana EC2 has an IAM instance profile
+# with cloudwatch:Read, authType "default" works. Otherwise set keys in the UI.
+datasources:
+  - name: Prometheus
+    uid: fetdpnih8dmo0f
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s
+
+  - name: Loki
+    uid: dogpack-loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    editable: true
+    jsonData:
+      maxLines: 1000
+
+  - name: Tempo
+    uid: dogpack-tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    isDefault: false
+    editable: true
+    jsonData:
+      httpMethod: GET
+      streamingEnabled: true
+      tracesToLogs:
+        datasourceUid: dogpack-loki
+        tags: [job, instance, service]
+        spanStartTimeShift: -1h
+        spanEndTimeShift: 1h
+        filterByTraceID: true
+        filterBySpanID: false
+      nodeGraph:
+        enabled: true
+
+  # RDS CPU / EC2 CloudWatch metrics — import dashboards 707 (AWS EC2), 13930 (RDS) after DS works.
+  - name: CloudWatch
+    uid: aws-cloudwatch
+    type: cloudwatch
+    access: proxy
+    isDefault: false
+    editable: true
+    jsonData:
+      authType: default
+      defaultRegion: us-east-1

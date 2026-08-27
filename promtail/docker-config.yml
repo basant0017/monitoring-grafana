@@ -1,0 +1,39 @@
+# Promtail on the monitoring server — ships Docker container logs to Loki.
+# Requires: /var/run/docker.sock and /var/lib/docker/containers mounted in compose.
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /var/lib/promtail/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        regex: /(.*)
+        target_label: container
+      - source_labels: [__meta_docker_container_log_stream]
+        target_label: stream
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: compose_service
+      - source_labels: [__meta_docker_container_label_com_docker_compose_project]
+        target_label: compose_project
+      - target_label: job
+        replacement: docker
+      - target_label: environment
+        replacement: ${PROMTAIL_ENVIRONMENT}
+      - target_label: host
+        replacement: ${PROMTAIL_HOST}
+      - target_label: service_job
+        replacement: ${PROMTAIL_SERVICE_JOB}
+      - target_label: instance_id
+        replacement: ${PROMTAIL_INSTANCE_ID}
+    pipeline_stages:
+      - docker: {}

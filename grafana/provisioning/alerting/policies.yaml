@@ -1,0 +1,12 @@
+# Default route: send all alert notifications to Slack (edit receiver to match contact point name).
+apiVersion: 1
+policies:
+  - orgId: 1
+    receiver: slack-alerts
+    group_by:
+      - grafana_folder
+      - alertname
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    routes: []

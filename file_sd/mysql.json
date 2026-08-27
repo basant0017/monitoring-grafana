@@ -1,0 +1,9 @@
+[
+  {
+    "targets": ["10.0.1.10:9104"],
+    "labels": {
+      "environment": "production",
+      "mysql_cluster": "primary"
+    }
+  }
+]

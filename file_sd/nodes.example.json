@@ -1,0 +1,38 @@
+[
+  {
+    "targets": ["10.0.10.1:9100"],
+    "labels": {
+      "environment": "Production",
+      "service_job": "Production-Chat",
+      "instance_id": "i-0123456789abcdef0",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["10.0.20.5:9100"],
+    "labels": {
+      "environment": "Release",
+      "service_job": "Web app",
+      "instance_id": "i-0fedcba9876543210",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["10.0.30.8:9100"],
+    "labels": {
+      "environment": "Staging",
+      "service_job": "node",
+      "instance_id": "i-0abcdef0123456789",
+      "role": "app"
+    }
+  },
+  {
+    "targets": ["10.0.40.12:9100"],
+    "labels": {
+      "environment": "Development",
+      "service_job": "Web app",
+      "instance_id": "i-0987654321fedcba0",
+      "role": "app"
+    }
+  }
+]
