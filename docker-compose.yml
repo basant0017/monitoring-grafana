@@ -67,6 +67,7 @@ services:
       # Requires IAM role on this host + IMDS hop limit 2 for Docker. See scripts/verify-cloudwatch-grafana.sh
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_SDK_LOAD_CONFIG: "true"
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana-data:/var/lib/grafana

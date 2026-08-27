@@ -1,6 +1,5 @@
 global:
   resolve_timeout: 5m
-  # Optional: set SMTP / Slack defaults here after configuring receivers below
 
 route:
   receiver: "team-alerts"
@@ -15,24 +14,16 @@ receivers:
       - api_url: "__SLACK_WEBHOOK_URL__"
         channel: "#alerts"
         send_resolved: true
-        title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
-        text: "{{ range .Alerts }}{{ .Annotations.summary }} — {{ .Annotations.description }}\n{{ end }}"
-
-    email_configs:
-      - to: "alerts@yourcompany.com"
-        from: "alertmanager@yourcompany.com"
-        smarthost: "smtp.yourcompany.com:587"
-        auth_username: "alertmanager@yourcompany.com"
-        auth_password: "REPLACE_WITH_SMTP_PASSWORD_OR_APP_PASSWORD"
-        headers:
-          Subject: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
-        html: |
+        title: >-
+          [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}]
+          {{ .CommonLabels.alertname }}
+        text: |-
           {{ range .Alerts }}
-          <p><b>{{ .Annotations.summary }}</b></p>
-          <p>{{ .Annotations.description }}</p>
-          <pre>{{ .Labels }}</pre>
+          *{{ .Annotations.summary }}*
+          {{ .Annotations.description }}
+          *env:* `{{ .Labels.environment }}`  *severity:* `{{ .Labels.severity }}`  *instance:* `{{ .Labels.instance }}`
           {{ end }}
-        send_resolved: true
+        color: '{{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical" }}danger{{ else }}warning{{ end }}{{ else }}good{{ end }}'
 
 inhibit_rules:
   - source_matchers:
