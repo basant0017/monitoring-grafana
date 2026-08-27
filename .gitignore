@@ -1,0 +1,17 @@
+# Environment / secrets
+.env
+*.env
+
+# Grafana
+grafana/data/
+grafana/logs/
+
+# Docker
+docker-compose.yml-bk
+docker-compose.yml-running
+
+# OS
+.DS_Store
+
+# Logs
+*.log
