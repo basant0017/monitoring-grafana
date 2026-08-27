@@ -15,3 +15,4 @@ docker-compose.yml-running
 
 # Logs
 *.log
+.env
