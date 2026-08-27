@@ -9,7 +9,6 @@ contactPoints:
         type: slack
         settings:
           url: "${SLACK_WEBHOOK_URL}"
-          recipient: "#alerts"
           title: |
             [{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}
           text: |
